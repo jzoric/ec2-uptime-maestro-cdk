@@ -1,1 +1,1 @@
-# ec2-uptime-maestro-cdk construc
+# ec2-uptime-maestro-cdk Construct
