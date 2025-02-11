@@ -21,7 +21,6 @@ export class LocalBinaryBundling implements ILocalBundling {
   }
 
   private downloadAndVerifyBinary(binaryPath: string): boolean {
-    console.log(this.props);
     try {
       execSync(`
         curl -L -o ${binaryPath} ${this.props.url} && \
