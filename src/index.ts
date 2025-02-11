@@ -18,6 +18,9 @@ export interface IEc2MaestroProps {
 
   stopRuleName?: string;
   stopSchedule?: string;
+
+  tags?: { [key: string]: string };
+
 }
 
 const DEFAULT_SCHEDULE_PROPS = {
@@ -101,5 +104,9 @@ export class Ec2Maestro extends Construct {
         'detail-type': 'stop',
       }),
     }));
+
+    Object.entries(props.tags as { [key: string]: string }).forEach(([key, value]) => {
+      cdk.Tags.of(this).add(key, value);
+    });
   }
 }
