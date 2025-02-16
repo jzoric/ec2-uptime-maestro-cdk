@@ -25,6 +25,9 @@ describe('Ec2Maestro', () => {
     version: '1.0.0',
     checksum: 'mock-checksum-123',
     url: 'https://example.com/binary',
+    tags: {
+      Name: 'test',
+    },
   };
   describe('Role', () => {
     const app = new App();
