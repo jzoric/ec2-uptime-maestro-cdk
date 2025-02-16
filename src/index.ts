@@ -1,5 +1,7 @@
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
@@ -10,7 +12,23 @@ export interface IEc2MaestroProps {
   version: string;
   checksum: string;
   url: string;
+
+  startRuleName?: string;
+  startSchedule?: string;
+
+  stopRuleName?: string;
+  stopSchedule?: string;
+
+  tags?: { [key: string]: string };
+
 }
+
+const DEFAULT_SCHEDULE_PROPS = {
+  startSchedule: 'cron(0 8 ? * MON-FRI *)',
+  startRuleName: 'start-ec2-instances',
+  stopSchedule: 'cron(0 18 ? * MON-FRI *)',
+  stopRuleName: 'stop-ec2-instances',
+};
 
 export class Ec2Maestro extends Construct {
 
@@ -47,7 +65,7 @@ export class Ec2Maestro extends Construct {
       checksum: props.checksum,
     });
 
-    new Function(this, 'lambda-function', {
+    const lambdaMaestro = new Function(this, 'lambda-function', {
       runtime: Runtime.PROVIDED_AL2,
       handler: 'main',
       memorySize: 128,
@@ -61,6 +79,34 @@ export class Ec2Maestro extends Construct {
           local: localBundling,
         },
       }),
+    });
+
+    const startInstancesRule = new events.Rule(this, 'start-instances-rule', {
+      ruleName: props.startRuleName || DEFAULT_SCHEDULE_PROPS.startRuleName,
+      description: 'Start EC2 instances on schedule',
+      schedule: events.Schedule.expression(props.startSchedule || DEFAULT_SCHEDULE_PROPS.startSchedule),
+    });
+
+    const stopInstancesRule = new events.Rule(this, 'stop-instances-rule', {
+      ruleName: props.stopRuleName || DEFAULT_SCHEDULE_PROPS.stopRuleName,
+      description: 'Stop EC2 instances on schedule',
+      schedule: events.Schedule.expression(props.stopSchedule || DEFAULT_SCHEDULE_PROPS.stopSchedule),
+    });
+
+    startInstancesRule.addTarget(new targets.LambdaFunction(lambdaMaestro, {
+      event: events.RuleTargetInput.fromObject({
+        'detail-type': 'start',
+      }),
+    }));
+
+    stopInstancesRule.addTarget(new targets.LambdaFunction(lambdaMaestro, {
+      event: events.RuleTargetInput.fromObject({
+        'detail-type': 'stop',
+      }),
+    }));
+
+    Object.entries(props.tags as { [key: string]: string }).forEach(([key, value]) => {
+      cdk.Tags.of(this).add(key, value);
     });
   }
 }
