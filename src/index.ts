@@ -82,7 +82,7 @@ export class Ec2Maestro extends Construct {
     });
 
     const startInstancesRule = new events.Rule(this, 'start-instances-rule', {
-      ruleName: props.startRuleName || DEFAULT_SCHEDULE_PROPS.stopRuleName,
+      ruleName: props.startRuleName || DEFAULT_SCHEDULE_PROPS.startRuleName,
       description: 'Start EC2 instances on schedule',
       schedule: events.Schedule.expression(props.startSchedule || DEFAULT_SCHEDULE_PROPS.startSchedule),
     });
