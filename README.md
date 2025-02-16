@@ -14,7 +14,7 @@ EC2 instances need to have the tag: `ec2maestro:yes`
 
 ## Usage
 
-Install package: `npm i ec2-uptime-maestro-cdk` from npm `https://www.npmjs.com/package/ec2-uptime-maestro-cdk`
+Install package: `npm i ec2-uptime-maestro-cdk` from `https://www.npmjs.com/package/ec2-uptime-maestro-cdk`
 
 ```typescript
 const MAESTRO_CONFIG = {
