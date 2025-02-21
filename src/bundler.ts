@@ -9,22 +9,11 @@ interface BinaryProps {
 export class LocalBinaryBundling implements ILocalBundling {
   constructor(private readonly props: BinaryProps) { }
 
-  private verifyExistingBinary(binaryPath: string): boolean {
-    try {
-      const existingHash = execSync(`sha256sum ${binaryPath}`)
-        .toString()
-        .split(' ')[0];
-      return existingHash === this.props.checksum;
-    } catch (err) {
-      return false;
-    }
-  }
-
   private downloadAndVerifyBinary(binaryPath: string): boolean {
     try {
       execSync(`
         curl -L -o ${binaryPath} ${this.props.url} && \
-        echo "${this.props.checksum}  ${binaryPath}" | sha256sum -c && \
+        echo "${this.props.checksum}  ${binaryPath}" | sha256sum -c - && \
         chmod +x ${binaryPath}
       `, { stdio: 'inherit' });
       return true;
@@ -36,11 +25,17 @@ export class LocalBinaryBundling implements ILocalBundling {
   public tryBundle(outputDir: string): boolean {
     const binaryPath = `${outputDir}/bootstrap`;
 
-    if (this.verifyExistingBinary(binaryPath)) {
-      console.log('Binary already exists with correct hash');
-      return true;
+    if (!this.downloadAndVerifyBinary(binaryPath)) {
+      throw new BundlerError("Can't download and verify ec2-uptime-maestro binary! Stopping bundle phase...");
     }
 
-    return this.downloadAndVerifyBinary(binaryPath);
+    return true;
+  }
+}
+
+class BundlerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BundlerError";
   }
 }
