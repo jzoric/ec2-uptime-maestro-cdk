@@ -1,5 +1,15 @@
 import { execSync } from 'child_process';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
 import { ILocalBundling } from 'aws-cdk-lib/core';
+import request from 'sync-request';
+
+class BundlerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BundlerError';
+  }
+}
 
 interface BinaryProps {
   url: string;
@@ -9,40 +19,59 @@ interface BinaryProps {
 export class LocalBinaryBundling implements ILocalBundling {
   constructor(private readonly props: BinaryProps) { }
 
-  private verifyExistingBinary(binaryPath: string): boolean {
+  private downloadBinary(binaryPath: string): boolean {
     try {
-      const existingHash = execSync(`sha256sum ${binaryPath}`)
-        .toString()
-        .split(' ')[0];
-      return existingHash === this.props.checksum;
-    } catch (err) {
-      return false;
+      const response = request('GET', this.props.url);
+
+      if (response.statusCode !== 200) {
+        throw new BundlerError(
+          `Download failed with status: ${response.statusCode}`,
+        );
+      }
+
+      fs.writeFileSync(binaryPath, response.getBody());
+
+      return true;
+    } catch (error) {
+      throw new BundlerError(`Failed to download binary: ${error}`);
     }
   }
 
-  private downloadAndVerifyBinary(binaryPath: string): boolean {
-    console.log(this.props);
+  private verifyChecksum(binaryPath: string): boolean {
     try {
-      execSync(`
-        curl -L -o ${binaryPath} ${this.props.url} && \
-        echo "${this.props.checksum}  ${binaryPath}" | sha256sum -c && \
-        chmod +x ${binaryPath}
-      `, { stdio: 'inherit' });
+      const fileBuffer = fs.readFileSync(binaryPath);
+      const hash = crypto.createHash('sha256');
+      hash.update(fileBuffer);
+      const calculatedChecksum = hash.digest('hex');
+
+      if (calculatedChecksum !== this.props.checksum) {
+        throw new BundlerError(
+          `Checksum verification failed!\nExpected: ${this.props.checksum}\nGot: ${calculatedChecksum}`,
+        );
+      }
+
       return true;
-    } catch (err) {
-      return false;
+    } catch (error) {
+      if (error instanceof BundlerError) throw error;
+      throw new BundlerError(`Checksum verification failed: ${error}`);
     }
   }
 
   public tryBundle(outputDir: string): boolean {
     const binaryPath = `${outputDir}/bootstrap`;
 
-    if (this.verifyExistingBinary(binaryPath)) {
-      console.log('Binary already exists with correct hash');
-      return true;
-    }
+    this.downloadBinary(binaryPath);
 
-    return this.downloadAndVerifyBinary(binaryPath);
+    this.verifyChecksum(binaryPath);
+
+    if (process.platform === 'win32') {
+      // TODO not sure about this.
+      execSync(`icacls "${binaryPath}" /grant Everyone:RX`, {
+        stdio: 'inherit',
+      });
+    } else {
+      fs.chmodSync(binaryPath, 0o755);
+    }
+    return true;
   }
 }
-
