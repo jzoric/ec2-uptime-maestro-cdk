@@ -17,10 +17,12 @@ EC2 instances need to have the tag: `ec2maestro:yes`
 Install package: `npm i ec2-uptime-maestro-cdk` from `https://www.npmjs.com/package/ec2-uptime-maestro-cdk`
 
 ```typescript
+const VERSION = "v1.0.0";
+
 const MAESTRO_CONFIG = {
-  version: "v1.0.0",
+  version: VERSION,
   checksum: "6579469e52ec933130f7fa8646c4780d29eceedb6cf51cc3d68f45540fc24389",
-  url: `https://github.com/jzoric/ec2-uptime-maestro-lambda/releases/download/v1.0.0/bootstrap`,
+  url: `https://github.com/jzoric/ec2-uptime-maestro-lambda/releases/download/${VERSION}/bootstrap`,
 };
 
 export class Ec2UptimeMaestroAwscdkStack extends cdk.Stack {
