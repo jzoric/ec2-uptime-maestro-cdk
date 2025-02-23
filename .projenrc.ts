@@ -11,5 +11,5 @@ const project = new awscdk.AwsCdkConstructLibrary({
   repositoryUrl: 'https://github.com/jzoric/ec2-uptime-maestro-cdk.git',
 });
 
-project.addBundledDeps("sync-request");
+project.addBundledDeps('sync-request');
 project.synth();
