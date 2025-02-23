@@ -2,7 +2,7 @@ import { ILocalBundling } from "aws-cdk-lib/core";
 import { execSync } from "child_process";
 import * as fs from "fs";
 import * as crypto from "crypto";
-const requ = require("sync-request");
+import request from "sync-request";
 
 class BundlerError extends Error {
   constructor(message: string) {
@@ -21,7 +21,7 @@ export class LocalBinaryBundling implements ILocalBundling {
 
   private downloadBinary(binaryPath: string): boolean {
     try {
-      const response = requ("GET", this.props.url);
+      const response = request("GET", this.props.url);
 
       if (response.statusCode !== 200) {
         throw new BundlerError(
