@@ -75,7 +75,7 @@ export class Ec2Maestro extends Construct {
         assetHash: `${props.version}-${props.checksum}`,
         assetHashType: cdk.AssetHashType.CUSTOM,
         bundling: {
-          image: cdk.DockerImage.fromRegistry("none"),
+          image: cdk.DockerImage.fromRegistry('none'),
           local: localBundling,
         },
       }),

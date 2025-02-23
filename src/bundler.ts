@@ -1,13 +1,13 @@
-import { ILocalBundling } from "aws-cdk-lib/core";
-import { execSync } from "child_process";
-import * as fs from "fs";
-import * as crypto from "crypto";
-import request from "sync-request";
+import { execSync } from 'child_process';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
+import { ILocalBundling } from 'aws-cdk-lib/core';
+import request from 'sync-request';
 
 class BundlerError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "BundlerError";
+    this.name = 'BundlerError';
   }
 }
 
@@ -21,7 +21,7 @@ export class LocalBinaryBundling implements ILocalBundling {
 
   private downloadBinary(binaryPath: string): boolean {
     try {
-      const response = request("GET", this.props.url);
+      const response = request('GET', this.props.url);
 
       if (response.statusCode !== 200) {
         throw new BundlerError(
@@ -40,9 +40,9 @@ export class LocalBinaryBundling implements ILocalBundling {
   private verifyChecksum(binaryPath: string): boolean {
     try {
       const fileBuffer = fs.readFileSync(binaryPath);
-      const hash = crypto.createHash("sha256");
+      const hash = crypto.createHash('sha256');
       hash.update(fileBuffer);
-      const calculatedChecksum = hash.digest("hex");
+      const calculatedChecksum = hash.digest('hex');
 
       if (calculatedChecksum !== this.props.checksum) {
         throw new BundlerError(
@@ -64,10 +64,10 @@ export class LocalBinaryBundling implements ILocalBundling {
 
     this.verifyChecksum(binaryPath);
 
-    if (process.platform === "win32") {
+    if (process.platform === 'win32') {
       // TODO not sure about this.
       execSync(`icacls "${binaryPath}" /grant Everyone:RX`, {
-        stdio: "inherit",
+        stdio: 'inherit',
       });
     } else {
       fs.chmodSync(binaryPath, 0o755);
